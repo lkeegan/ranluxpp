@@ -51,7 +51,7 @@ protected:
   // For this option set:
   // _n_packed_doubles = 10
   // NB other values of _n_packed_doubles are not valid and will not compile.
-  static const int _n_packed_doubles = 10; //can be either 11 (default) or 10
+  static const int _n_packed_doubles = 11; //can be either 11 (default) or 10
   uint64_t _doubles[_n_packed_doubles]; // cache for double precision numbers 
   uint32_t _floats[24];  // cache for single precision numbers 
   uint32_t _dpos; // position in cache for doubles
