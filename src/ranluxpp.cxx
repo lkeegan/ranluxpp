@@ -51,7 +51,7 @@ ranluxpp::ranluxpp(uint64_t seed, uint64_t p) : _dpos(11), _fpos(24) {
   init(seed);
 }
 
-// the core of LCG -- modular mulitplication
+// the core of LCG -- modular multiplication
 void ranluxpp::nextstate(){
   mul9x9mod(_x,_A);
 }
@@ -61,7 +61,7 @@ void ranluxpp::nextfloats() {
 }
   
 void ranluxpp::nextdoubles() {
-  nextstate(); unpackdoubles((double*)_doubles); _dpos = 0;
+  nextstate(); unpackdoubles<_n_packed_doubles>((double*)_doubles); _dpos = 0;
 }
   
 // unpack state into single precision format
@@ -80,28 +80,6 @@ void ranluxpp::unpackfloats(float *a) {
     f[6] = sc * (int32_t)(m & ((t[2]>>16)));
     f[7] = sc * (int32_t)(m & ((t[2]>>40)));
   }
-}
-
-// unpack state into double precision format
-// 52 bits out of possible 53 bits are random
-void ranluxpp::unpackdoubles(double *d) {
-  const uint64_t
-    one = 0x3ff0000000000000, // exponent
-    m   = 0x000fffffffffffff; // mantissa
-  uint64_t *id = (uint64_t*)d;
-  id[ 0] = one | (m & _x[0]);
-  id[ 1] = one | (m & ((_x[0]>>52)|(_x[1]<<12)));
-  id[ 2] = one | (m & ((_x[1]>>40)|(_x[2]<<24)));
-  id[ 3] = one | (m & ((_x[2]>>28)|(_x[3]<<36)));
-  id[ 4] = one | (m & ((_x[3]>>16)|(_x[4]<<48)));
-  id[ 5] = one | (m & ((_x[4]>> 4)|(_x[5]<<60)));
-  id[ 6] = one | (m & ((_x[4]>>56)|(_x[5]<< 8)));
-  id[ 7] = one | (m & ((_x[5]>>44)|(_x[6]<<20)));
-  id[ 8] = one | (m & ((_x[6]>>32)|(_x[7]<<32)));
-  id[ 9] = one | (m & ((_x[7]>>20)|(_x[8]<<44)));
-  id[10] = one | (m & _x[8]>>8);
-
-  for(int j=0;j<11;j++) d[j] -= 1;
 }
 
 void ranluxpp::getarray(int n, float *a) {
@@ -129,8 +107,8 @@ void ranluxpp::getarray(int n, float *a) {
 }
   
 void ranluxpp::getarray(int n, double *a) {
-  if(_dpos < 11) {
-    int rest = 11 - _dpos;
+  if(_dpos < _n_packed_doubles) {
+    int rest = _n_packed_doubles - _dpos;
     rest = (rest < n) ? rest : n;
     double *f = (double*)_doubles + _dpos;
     for(int i=0;i<rest;i++) a[i] = f[i];
@@ -138,11 +116,11 @@ void ranluxpp::getarray(int n, double *a) {
     a     += rest;
     _dpos += rest;
   }
-  while(n>=11){
+  while(n>=_n_packed_doubles){
     nextstate();
-    unpackdoubles(a);
-    n -= 11;
-    a += 11;
+    unpackdoubles<_n_packed_doubles>(a);
+    n -= _n_packed_doubles;
+    a += _n_packed_doubles;
   }
   if(n){
     nextdoubles();
